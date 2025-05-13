@@ -12,8 +12,8 @@ from tkinter import font
 from utils.FontLoader import FontLoader
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\frame3")
-font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\fonts"))
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\frame3")
+font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\fonts"))
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -97,18 +97,19 @@ image_3 = canvas.create_image(
 
 #lobby timer value placeholder
 canvas.create_text(
-    646.0,
-    300.0,
-    anchor="nw",
+    712.0,
+    320.0,
+    anchor="center",
     text="0",
     fill="#F8EFE0",
-    font=("Silkscreen Regular", 40 * -1)
+    font=("Silkscreen Regular", 40 * -1),
+    tags=("countdown_value",)
 )
 
 canvas.create_text(
-    597.0,
+    712.0,
     372.0,
-    anchor="nw",
+    anchor="center",
     text="Waiting for another player to join...",
     fill="#BBBBBB",
     font=("Montserrat BoldItalic", 16 * -1)
@@ -124,9 +125,9 @@ image_4 = canvas.create_image(
 
 #username placeholder
 canvas.create_text(
-    286.0,
+    326.0,
     379.0,
-    anchor="nw",
+    anchor="center",
     text="username",
     fill="#232323",
     font=("Montserrat Bold", 15 * -1)
@@ -147,5 +148,11 @@ image_6 = canvas.create_image(
     92.0,
     image=image_image_6
 )
+
+def update_word(countdown:int):
+    """Update countdown value"""
+    canvas.itemconfig('countdown_value', text=countdown)
+
+update_word(19)
 window.resizable(False, False)
 window.mainloop()

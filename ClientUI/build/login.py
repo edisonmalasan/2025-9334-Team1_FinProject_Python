@@ -8,14 +8,13 @@ from pathlib import Path
 # from tkinter import *
 # Explicit imports to satisfy Flake8
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
-from PIL import ImageFont  # Added for custom fonts
-from tkinter import font  # Add this import
+from tkinter import font
 from utils.FontLoader import FontLoader
 
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\frame0")
-font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\fonts"))
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\frame1")
+font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\fonts"))
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -27,6 +26,24 @@ window.configure(bg = "#FFFFFF")
 
 font_loader.load_tk_font("silkscreen", "Silkscreen", 24)
 font_loader.load_tk_font("montserrat", "Montserrat", 18, weight="bold")
+
+try:
+    font_silkscreen_regular = font.Font(
+        family="Silkscreen", 
+        size=24,
+        weight="normal" 
+    )
+    font_montserrat_bold = font.Font(
+        family="Montserrat", 
+        size=18,
+        weight="bold"
+    )
+except IOError as e:
+    print(f"Font error: {e}. Using fallback fonts.")
+    font_silkscreen = ("Arial", 24)
+    font_bold = ("Arial", 18, "bold")
+    font_italic = ("Arial", 16, "italic")
+
 
 canvas = Canvas(
     window,
@@ -55,6 +72,15 @@ image_1 = canvas.create_image(
     image=image_image_1
 )
 
+canvas.create_rectangle(
+    649.0,
+    474.0,
+    719.0,
+    475.0,
+    fill="#7349F5",
+    outline="")
+
+#register button
 button_image_1 = PhotoImage(
     file=relative_to_assets("button_1.png"))
 button_1 = Button(
@@ -62,7 +88,8 @@ button_1 = Button(
     borderwidth=0,
     highlightthickness=0,
     command=lambda: print("button_1 clicked"),
-    relief="flat"
+    relief="flat",
+    background="#F8EFE0"
 )
 button_1.place(
     x=622.0,
@@ -71,6 +98,7 @@ button_1.place(
     height=22.0
 )
 
+#enter button
 button_image_2 = PhotoImage(
     file=relative_to_assets("button_2.png"))
 button_2 = Button(
@@ -78,7 +106,8 @@ button_2 = Button(
     borderwidth=0,
     highlightthickness=0,
     command=lambda: print("button_2 clicked"),
-    relief="flat"
+    relief="flat",
+    background="#F8EFE0"
 )
 button_2.place(
     x=631.0,
@@ -87,24 +116,27 @@ button_2.place(
     height=35.0
 )
 
+#password label
 canvas.create_text(
     535.0,
     301.0,
     anchor="nw",
     text="PASSWORD",
     fill="#000000",
-    font=font_loader.get_font("silkscreen")
+    font=("Silkscreen Regular", 24 * -1)
 )
 
+#username label
 canvas.create_text(
     535.0,
     208.0,
     anchor="nw",
     text="Username",
     fill="#000000",
-    font=font_loader.get_font("silkscreen")
+    font=("Silkscreen Regular", 24 * -1)
 )
 
+#password entry
 entry_1 = Entry(
     bd=0,
     show="*",
@@ -119,6 +151,7 @@ entry_1.place(
     height=39.0
 )
 
+#username entry
 entry_2 = Entry(
     bd=0,
     bg="#FFFFFF",
@@ -132,6 +165,7 @@ entry_2.place(
     height=39.0
 )
 
+#title image
 image_image_2 = PhotoImage(
     file=relative_to_assets("image_2.png"))
 image_2 = canvas.create_image(

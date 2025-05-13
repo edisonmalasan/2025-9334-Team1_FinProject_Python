@@ -106,12 +106,13 @@ canvas.create_text(
 
 #word number value placeholder
 canvas.create_text(
-    485.0,
-    220.0,
-    anchor="nw",
+    528.0,  # x = image center
+    295.0,  # y = image center
+    anchor="center",
     text="#",
     fill="#FFFFFF",
-    font=("Silkscreen Regular", 96 * -1)
+    font=("Silkscreen Regular", 80 * -1),
+    tags=("word_placeholder",)
 )
 
 canvas.create_text(
@@ -122,5 +123,12 @@ canvas.create_text(
     fill="#FFFFFF",
     font=("Silkscreen Regular", 24 * -1)
 )
+
+def update_word(new_word:str):
+    """Update word value"""
+    canvas.itemconfig('word_placeholder', text=new_word)
+
+update_word("skibidi")
+
 window.resizable(False, False)
 window.mainloop()

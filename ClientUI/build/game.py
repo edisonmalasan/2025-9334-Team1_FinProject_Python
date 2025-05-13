@@ -105,7 +105,7 @@ class GameContainer:
             validatecommand=(window.register(self._validate_entry), '%P')
         )
         
-        #bind to enter key for submitting guesses
+        #bind to enter(newline) key for submitting guesses
         entry.bind('<Return>', self._submit_guess)
         
         self.elements['entry_window'] = self.canvas.create_window(

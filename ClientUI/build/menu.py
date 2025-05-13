@@ -13,8 +13,8 @@ from utils.FontLoader import FontLoader
 
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\frame2")
-font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\fonts"))
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\frame2")
+font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\fonts"))
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -55,6 +55,7 @@ canvas = Canvas(
     relief = "ridge"
 )
 
+#bg image
 canvas.place(x = 0, y = 0)
 image_image_1 = PhotoImage(
     file=relative_to_assets("image_1.png"))
@@ -64,6 +65,7 @@ image_1 = canvas.create_image(
     image=image_image_1
 )
 
+#logout button
 button_image_1 = PhotoImage(
     file=relative_to_assets("button_1.png"))
 button_1 = Button(
@@ -80,6 +82,7 @@ button_1.place(
     height=33.56594467163086
 )
 
+#leaderboards button
 button_image_2 = PhotoImage(
     file=relative_to_assets("button_2.png"))
 button_2 = Button(
@@ -96,6 +99,7 @@ button_2.place(
     height=37.3380126953125
 )
 
+#start button
 button_image_3 = PhotoImage(
     file=relative_to_assets("button_3.png"))
 button_3 = Button(
@@ -112,6 +116,7 @@ button_3.place(
     height=37.3380126953125
 )
 
+#title image
 image_image_2 = PhotoImage(
     file=relative_to_assets("image_2.png"))
 image_2 = canvas.create_image(
