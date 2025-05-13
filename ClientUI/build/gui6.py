@@ -166,34 +166,46 @@ class GameContainer:
             )
             self.current_display.append(line)
 
-    def update_words_guessed(self, letter: str, is_correct: bool):
-        """Update the display with a new guessed letter"""
+    def update_letters_guessed(self, letter: str, is_correct: bool, positions=None):
         if not self.word_length:
-            return  # No word length set yet
+            return  #no word length set
             
-        #track letters guessed
-        self.guessed_letters.append((letter.upper(), is_correct))
+        #track letters guessed (position and letter)
+        self.guessed_letters.append((letter.upper(), is_correct, positions))
         
         self.clear_display()
-        #recreate display
         self.create_initial_display()
         
         cx = self.x1 + self.width / 2
         start_x = cx - (self.word_length * 30) / 2
         
-        #display all guessed letters
-        for idx, (l, correct) in enumerate(self.guessed_letters):
-            if idx >= self.word_length:
-                break
-                
-            color = "#FFAB24" if correct else "#FF0000"  #yellow if correct, red if wrong
+        #display the correct guesses and their relativ positions
+        for idx in range(self.word_length):
+            #to check if any letter is in the correct position
+            for l, correct, positions in self.guessed_letters:
+                if correct and positions and idx in positions:
+                    #show letter in its correct position
+                    text = self.canvas.create_text(
+                        start_x + idx * 30 + 20,
+                        self.y1 + 180,
+                        text=l,
+                        fill="#FFAB24",  #yellow if correct
+                        font=("Silkscreen Regular", 36 * -1),
+                        anchor="s"
+                    )
+                    self.current_display.append(text)
+        
+        #container for incorrect guesses
+        incorrect_letters = [l for l, correct, _ in self.guessed_letters if not correct]
+        if incorrect_letters:
+            #show incorrect guesses in an area
             text = self.canvas.create_text(
-                start_x + idx * 30 + 20,  # x (centered in the line)
-                self.y1 + 200,             # y (above the line)
-                text=l,
-                fill=color,
-                font=("Silkscreen Regular", 36 * -1),
-                anchor="s"  #anchor at bottom of text
+                cx,
+                self.y1 + 210,
+                text=f"Wrong: {', '.join(incorrect_letters)}",
+                fill="#FF0000",  #red for wrong lmao
+                font=("Silkscreen Regular", 16 * -1),
+                anchor="n"
             )
             self.current_display.append(text)
     
@@ -219,9 +231,11 @@ class GameContainer:
         
         # If we have a callback, call it with the guessed letter
         if self.on_letter_guessed:
-            # The callback should return whether the guess was correct
-            is_correct = self.on_letter_guessed(letter)
-            self.update_words_guessed(letter, is_correct)
+            #return if correct guess
+            result = self.on_letter_guessed(letter)
+            if result is not None:  #only update if leter was not already guessed
+                is_correct, positions = result
+                self.update_letters_guessed(letter, is_correct, positions)
 
     def set_on_letter_guessed(self, callback):
         """Set the callback for when a letter is guessed"""
@@ -247,6 +261,7 @@ class GameContainer:
         dy = (canvas_height - self.height) / 2
         self.set_position(dx,dy)
 
+#path declarations
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\frame6")
 font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\fonts"))
@@ -254,12 +269,13 @@ font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finpr
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-
+#window initialization
 window = Tk()
 
 window.geometry("985x589")
 window.configure(bg = "#FFFFFF")
 
+#font loaders
 font_loader.load_tk_font("silkscreen", "Silkscreen", 24)
 font_loader.load_tk_font("montserrat", "Montserrat", 18, weight="bold")
 
@@ -328,7 +344,7 @@ canvas.create_text(
     font=("Montserrat Bold", 16 * -1)
 )
 
-#round label placeholder
+#round value placeholder
 canvas.create_text(
     352.0,
     10.0,
@@ -338,36 +354,50 @@ canvas.create_text(
     font=("Silkscreen Regular", 64 * -1)
 )
 
-secret_word = "PYTHON"
-remaining_guesses = 6
+secret_word = "SNAKES"
+remaining_guesses = 5
 guessed_letters = set()
 
 def handle_letter_guess(letter):
     """Callback function for when a letter is guessed"""
-    global remaining_guesses, guessed_letters
+    global remaining_guesses, guessed_letters, secret_word
     
-    # Convert to uppercase for consistency
     letter = letter.upper()
     
-    # Don't process if already guessed
+    #check if letter is guessed (nabubuang na ko)
     if letter in guessed_letters:
-        return True  # Treat as correct to avoid penalty
+        show_tooltip(f"'{letter}' was already guessed")
+        return None  #no update needed
     
-    # Add to guessed letters
     guessed_letters.add(letter)
     
-    # Check if letter is in the word
-    is_correct = letter in secret_word
+    #to check if letter is in word
+    positions = [i for i, l in enumerate(secret_word) if l == letter]
+    is_correct = bool(positions)
     
-    # Update remaining guesses if wrong
     if not is_correct:
         remaining_guesses -= 1
         game_container.canvas.itemconfig(
             game_container.elements['guesses_left'],
             text=f"GUESSES LEFT: {remaining_guesses}"
         )
+        show_tooltip(f"'{letter}' is not in the word")
     
-    return is_correct
+    return is_correct, positions
+
+def show_tooltip(message):
+    """Show a temporary message to the player"""
+    cx = game_container.x1 + game_container.width / 2
+    tooltip = game_container.canvas.create_text(
+        cx,
+        game_container.y1 + 300,
+        text=message,
+        fill="#FF0000",
+        font=("Silkscreen Regular", 14 * -1),
+        anchor="n"
+    )
+    #remove tooltip after 2s
+    game_container.canvas.after(2000, lambda: game_container.canvas.delete(tooltip))
 
 
 game_container = GameContainer(canvas, image_assets)
@@ -378,3 +408,5 @@ game_container.set_word_length(len(secret_word))
 
 window.resizable(False, False)
 window.mainloop()
+
+#im going crazy
