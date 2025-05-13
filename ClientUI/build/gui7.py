@@ -20,8 +20,8 @@ class WinnerContainer:
         self.assets = image_assets
         
         # Container dimensions (x1, y1, x2, y2)
-        self.x1, self.y1 = 350.0, 30.0
-        self.width, self.height = 250.0, 370.0
+        self.x1, self.y1 = 0, 0
+        self.width, self.height = 300.0, 370.0
         
         self._create_container()
         self._add_elements()
@@ -40,50 +40,45 @@ class WinnerContainer:
         """Add all elements to the container"""
         center_x = self.x1 + self.width / 2
 
-        # Main winner text (positioned above container)
+        #winner label
         self.elements['winner_text'] = self.canvas.create_text(
-            center_x, self.y1 - 10,
+            center_x, self.y1 + 10,
             anchor="n",
             text="WINNER!",
             fill="#FFFFFF",
             font=("Silkscreen Regular", 40)
         )
         
-        # Profile image
-        self.elements['profile_image'] = self.canvas.create_image(
-            center_x, self.y1 + 100
-        )
-        
-        # Username
+        #username
         self.elements['username'] = self.canvas.create_text(
-            center_x, self.y1 + 170,
+            center_x, self.y1 + 100,
             anchor="n",
             text="username",
             fill="#FFAB24",
             font=("Montserrat Bold", 20)
         )
         
-        # Points
+        #points
         self.elements['points'] = self.canvas.create_text(
-            center_x, self.y1 + 200,
+            center_x, self.y1 + 150,
             anchor="n",
             text="0 points",
             fill="#FFAB24",
             font=("Silkscreen Regular", 15)
         )
         
-        # Words guessed label
+        #words guessed label
         self.elements['words_label'] = self.canvas.create_text(
-            center_x, self.y1 + 270,
+            center_x, self.y1 + 200,
             anchor="n",
             text="WORDS GUESSED:",
             fill="#F8EFE0",
             font=("Silkscreen Regular", 15)
         )
         
-        # Words guessed placeholder
+        #actual words guessed
         self.elements['words_placeholder'] = self.canvas.create_text(
-            center_x, self.y1 + 300,
+            center_x, self.y1 + 230,
             anchor="n",
             text="_______",
             fill="#FFFFFF",
@@ -92,16 +87,6 @@ class WinnerContainer:
             justify="center"
         )
         
-        # Underline
-        underline_width = 150
-        self.elements['underline'] = self.canvas.create_rectangle(
-            center_x - underline_width / 2, self.y1 + 295,
-            center_x + underline_width / 2, self.y1 + 296,
-            fill="#FFFFFF",
-            outline=""
-        )
-        
-        # Tag all elements for group operations
         for item in self.elements.values():
             self.canvas.itemconfig(item, tags=("winner_container",))
     
@@ -123,21 +108,21 @@ class WinnerContainer:
         "Update Words Guessed List"
         self.canvas.itemconfig(self.elements['words_placeholder'], text=words)
 
-        # Get bounding box of the updated text
-        bbox = self.canvas.bbox(self.elements['words_placeholder'])  # returns (x1, y1, x2, y2)
+        #get bounding box of updated text
+        bbox = self.canvas.bbox(self.elements['words_placeholder'])  #returns (x1, y1, x2, y2)
         if not bbox:
-            return  # avoid error if text not rendered yet
+            return  #avoid error if text not rendered yet
 
         content_bottom = bbox[3]
         container_bottom = self.y1 + self.height
 
         if content_bottom > container_bottom:
-            # Grow the container height
-            new_height = content_bottom - self.y1 + 20  # 20px padding
+            #grow container height
+            new_height = content_bottom - self.y1 + 20  #20px padding
             delta = new_height - self.height
             self.height = new_height
 
-            # Resize the rectangle
+            #resize container bg
             self.canvas.coords(
                 self.elements['bg'],
                 self.x1, self.y1,
@@ -223,9 +208,7 @@ button_1.place(x=445.0, y=536.999)
 winner_container = WinnerContainer(canvas, image_assets)
 guessed_words = ["apple", "banana", "pear"]
 
-# Example manipulations:
-winner_container.move(10, 20)  # Relative movement
-winner_container.set_position_center(985, 589) # Absolute position
+winner_container.set_position_center(985, 589)
 winner_container.update_username("player123")
 winner_container.update_points(1500)
 winner_container.update_words_guessed(guessed_words)

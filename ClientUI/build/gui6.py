@@ -7,7 +7,7 @@ from pathlib import Path
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
+from tkinter import StringVar, Tk, Canvas, Entry, Text, Button, PhotoImage
 from tkinter import font
 from utils.FontLoader import FontLoader
 
@@ -26,6 +26,8 @@ class GameContainer:
         self.word_length = 0 #store current word length
         self.guessed_letters = [] #store guessed letters and status
         self.current_display = [] #store elements for display
+        self.entry_var = None  #store user input
+        self.on_letter_guessed = None  #callback for when a letter is guessed
         
         self._create_container()
         self._add_elements()
@@ -75,30 +77,7 @@ class GameContainer:
             fill="#FFFFFF",
             font=("Silkscreen Regular", 20 * -1),
         )
-        top += 40
-
-        #Letter guessed
-        self.elements['letter_placeholder'] = self.canvas.create_text(
-            cx,
-            top,
-            anchor="n",
-            text="X",
-            fill="#FFAB24",
-            font=("Silkscreen Regular", 64 * -1),
-        )
-        top += 70
-
-        #line under letter
-        line_width = 60
-        self.elements['letter_line'] = self.canvas.create_rectangle(
-            cx - line_width / 2,
-            top,
-            cx + line_width / 2,
-            top + 3,
-            fill="#FFAB24",
-            outline="",
-        )
-        top += 20
+        top += 120
 
         #ENTER TEXT Label
         self.elements['enter_text'] = self.canvas.create_text(
@@ -113,13 +92,22 @@ class GameContainer:
 
         #Entry letter
         entry_width = 150
+        self.entry_var = StringVar()
         entry = Entry(
             bd=0,
             bg="#FFFFFF",
             fg="#000716",
             justify="center",
-            highlightthickness=0
+            highlightthickness=0,
+            textvariable=self.entry_var,
+            font=("Silkscreen Regular", 16 * -1),
+            validate="key",
+            validatecommand=(window.register(self._validate_entry), '%P')
         )
+        
+        #bind to enter key for submitting guesses
+        entry.bind('<Return>', self._submit_guess)
+        
         self.elements['entry_window'] = self.canvas.create_window(
             cx,
             top,
@@ -201,7 +189,7 @@ class GameContainer:
             color = "#FFAB24" if correct else "#FF0000"  #yellow if correct, red if wrong
             text = self.canvas.create_text(
                 start_x + idx * 30 + 20,  # x (centered in the line)
-                self.y1 + 180,             # y (above the line)
+                self.y1 + 200,             # y (above the line)
                 text=l,
                 fill=color,
                 font=("Silkscreen Regular", 36 * -1),
@@ -209,6 +197,36 @@ class GameContainer:
             )
             self.current_display.append(text)
     
+    def _validate_entry(self, new_text):
+        """Validation function for the Entry widget"""
+        #allow empty string for backspace
+        if not new_text:
+            return True
+        #allow only single alphabetic chars
+        return len(new_text) == 1 and new_text.isalpha()
+    
+    def _submit_guess(self, event=None):
+        """Handle submission of a letter guess"""
+        if not self.entry_var:
+            return
+            
+        letter = self.entry_var.get().upper()
+        if not letter or len(letter) != 1:
+            return
+            
+        #clear entry
+        self.entry_var.set("")
+        
+        # If we have a callback, call it with the guessed letter
+        if self.on_letter_guessed:
+            # The callback should return whether the guess was correct
+            is_correct = self.on_letter_guessed(letter)
+            self.update_words_guessed(letter, is_correct)
+
+    def set_on_letter_guessed(self, callback):
+        """Set the callback for when a letter is guessed"""
+        self.on_letter_guessed = callback        
+
     def hide(self):
         """Hide the entire container"""
         self.canvas.itemconfig("winner_container", state="hidden")
@@ -320,11 +338,43 @@ canvas.create_text(
     font=("Silkscreen Regular", 64 * -1)
 )
 
-game_container = GameContainer(canvas, image_assets)
-game_container.set_word_length(5)  # For a 5-letter word
-game_container.set_position_center(985, 589) # Absolute position
-game_container.update_words_guessed("A", True)
+secret_word = "PYTHON"
+remaining_guesses = 6
+guessed_letters = set()
 
+def handle_letter_guess(letter):
+    """Callback function for when a letter is guessed"""
+    global remaining_guesses, guessed_letters
+    
+    # Convert to uppercase for consistency
+    letter = letter.upper()
+    
+    # Don't process if already guessed
+    if letter in guessed_letters:
+        return True  # Treat as correct to avoid penalty
+    
+    # Add to guessed letters
+    guessed_letters.add(letter)
+    
+    # Check if letter is in the word
+    is_correct = letter in secret_word
+    
+    # Update remaining guesses if wrong
+    if not is_correct:
+        remaining_guesses -= 1
+        game_container.canvas.itemconfig(
+            game_container.elements['guesses_left'],
+            text=f"GUESSES LEFT: {remaining_guesses}"
+        )
+    
+    return is_correct
+
+
+game_container = GameContainer(canvas, image_assets)
+game_container.set_word_length(5)
+game_container.set_position_center(985, 589)
+game_container.set_on_letter_guessed(handle_letter_guess)
+game_container.set_word_length(len(secret_word))
 
 window.resizable(False, False)
 window.mainloop()
