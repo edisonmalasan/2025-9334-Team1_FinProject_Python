@@ -88,7 +88,8 @@ class WinnerContainer:
             text="_______",
             fill="#FFFFFF",
             font=("Silkscreen Regular", 15),
-            width=10
+            width=100,
+            justify="center"
         )
         
         # Underline
@@ -121,6 +122,27 @@ class WinnerContainer:
     def update_words_guessed(self, words: str):
         "Update Words Guessed List"
         self.canvas.itemconfig(self.elements['words_placeholder'], text=words)
+
+        # Get bounding box of the updated text
+        bbox = self.canvas.bbox(self.elements['words_placeholder'])  # returns (x1, y1, x2, y2)
+        if not bbox:
+            return  # avoid error if text not rendered yet
+
+        content_bottom = bbox[3]
+        container_bottom = self.y1 + self.height
+
+        if content_bottom > container_bottom:
+            # Grow the container height
+            new_height = content_bottom - self.y1 + 20  # 20px padding
+            delta = new_height - self.height
+            self.height = new_height
+
+            # Resize the rectangle
+            self.canvas.coords(
+                self.elements['bg'],
+                self.x1, self.y1,
+                self.x1 + self.width, self.y1 + self.height
+            )
     
     def hide(self):
         """Hide the entire container"""
@@ -144,8 +166,8 @@ class WinnerContainer:
 
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\frame7")
-font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\fonts"))
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\frame7")
+font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\fonts"))
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)

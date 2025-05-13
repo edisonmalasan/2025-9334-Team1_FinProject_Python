@@ -11,9 +11,227 @@ from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
 from tkinter import font
 from utils.FontLoader import FontLoader
 
+from tkinter import Canvas
+
+class GameContainer:
+    def __init__(self, canvas: Canvas, assets):
+        self.canvas = canvas
+        self.elements = {}
+        self.assets = image_assets
+        
+        #container dimensions (x1, y1, x2, y2)
+        self.x1, self.y1 = 0, 0
+        self.width, self.height = 721.77, 370.31
+
+        self.word_length = 0 #store current word length
+        self.guessed_letters = [] #store guessed letters and status
+        self.current_display = [] #store elements for display
+        
+        self._create_container()
+        self._add_elements()
+    
+    def _create_container(self):
+        """Create the container background/border"""
+        self.elements['bg'] = self.canvas.create_rectangle(
+            self.x1, self.y1,
+            self.x1 + self.width, self.y1 + self.height,
+            fill="#232323",
+            outline="#FFAB24",
+            width=2
+        )
+    
+    def _add_elements(self):
+        cx = self.x1 + self.width / 2  # horizontal center of the container
+        top = self.y1 + 20  # vertical padding from top of container
+
+        #TIME LEFT label
+        self.elements['time_label'] = self.canvas.create_text(
+            cx,
+            top,
+            anchor="n",
+            text="TIME LEFT",
+            fill="#FFFFFF",
+            font=("Silkscreen Regular", 36 * -1),
+        )
+        top += 40  # spacing below label
+
+        #TIMER value
+        self.elements['time_value'] = self.canvas.create_text(
+            cx,
+            top,
+            anchor="n",
+            text="00:00",
+            fill="#FFFFFF",
+            font=("Silkscreen Regular", 24 * -1),
+        )
+        top += 50  # spacing below entry
+
+        #GUESSES LEFT text
+        self.elements['guesses_left'] = self.canvas.create_text(
+            cx,
+            top,
+            anchor="n",
+            text="GUESSES LEFT: 5",
+            fill="#FFFFFF",
+            font=("Silkscreen Regular", 20 * -1),
+        )
+        top += 40
+
+        #Letter guessed
+        self.elements['letter_placeholder'] = self.canvas.create_text(
+            cx,
+            top,
+            anchor="n",
+            text="X",
+            fill="#FFAB24",
+            font=("Silkscreen Regular", 64 * -1),
+        )
+        top += 70
+
+        #line under letter
+        line_width = 60
+        self.elements['letter_line'] = self.canvas.create_rectangle(
+            cx - line_width / 2,
+            top,
+            cx + line_width / 2,
+            top + 3,
+            fill="#FFAB24",
+            outline="",
+        )
+        top += 20
+
+        #ENTER TEXT Label
+        self.elements['enter_text'] = self.canvas.create_text(
+            cx,
+            top,
+            anchor="n",
+            text="ENTER A LETTER:",
+            fill="#F8EFE0",
+            font=("Silkscreen Regular", 14 * -1),
+        )
+        top += 40
+
+        #Entry letter
+        entry_width = 150
+        entry = Entry(
+            bd=0,
+            bg="#FFFFFF",
+            fg="#000716",
+            justify="center",
+            highlightthickness=0
+        )
+        self.elements['entry_window'] = self.canvas.create_window(
+            cx,
+            top,
+            width=entry_width,
+            height=39.0,
+            window=entry,
+        )
+        top += 30
+
+        #tag for grp operations
+        for key, item in self.elements.items():
+            if isinstance(item, int):
+                self.canvas.itemconfig(item, tags=("game_container",))
+            
+    def move(self, dx: float, dy: float):
+        """Move entire container by dx, dy pixels"""
+        self.canvas.move("game_container", dx, dy)
+        self.x1 += dx
+        self.y1 += dy
+    
+    def update_username(self, new_name: str):
+        """Update username text"""
+        self.canvas.itemconfig(self.elements['username'], text=new_name)
+    
+    def update_points(self, points: int):
+        """Update points display"""
+        self.canvas.itemconfig(self.elements['points'], text=f"{points} points")
+
+    def set_word_length(self, length: int):
+        """Set the length of the word to be guessed"""
+        self.word_length = length
+        self.guessed_letters = []
+        self.clear_display()
+        self.create_initial_display()
+    
+    def clear_display(self):
+        """Clear all letter display elements"""
+        for item in self.current_display:
+            self.canvas.delete(item)
+        self.current_display = []
+
+    def create_initial_display(self):
+        """Create the initial display with empty lines"""
+        cx = self.x1 + self.width / 2  # horizontal center
+        start_x = cx - (self.word_length * 30) / 2  # center the letters
+        
+        for i in range(self.word_length):
+            #creaate line for each letter
+            line = self.canvas.create_rectangle(
+                start_x + i * 30 + 10,  # x1
+                self.y1 + 200,         # y1
+                start_x + i * 30 + 30,  # x2 (20px wide)
+                self.y1 + 203,          # y2 (3px tall)
+                fill="#FFAB24",
+                outline=""
+            )
+            self.current_display.append(line)
+
+    def update_words_guessed(self, letter: str, is_correct: bool):
+        """Update the display with a new guessed letter"""
+        if not self.word_length:
+            return  # No word length set yet
+            
+        #track letters guessed
+        self.guessed_letters.append((letter.upper(), is_correct))
+        
+        self.clear_display()
+        #recreate display
+        self.create_initial_display()
+        
+        cx = self.x1 + self.width / 2
+        start_x = cx - (self.word_length * 30) / 2
+        
+        #display all guessed letters
+        for idx, (l, correct) in enumerate(self.guessed_letters):
+            if idx >= self.word_length:
+                break
+                
+            color = "#FFAB24" if correct else "#FF0000"  #yellow if correct, red if wrong
+            text = self.canvas.create_text(
+                start_x + idx * 30 + 20,  # x (centered in the line)
+                self.y1 + 180,             # y (above the line)
+                text=l,
+                fill=color,
+                font=("Silkscreen Regular", 36 * -1),
+                anchor="s"  #anchor at bottom of text
+            )
+            self.current_display.append(text)
+    
+    def hide(self):
+        """Hide the entire container"""
+        self.canvas.itemconfig("winner_container", state="hidden")
+    
+    def show(self):
+        """Show the entire container"""
+        self.canvas.itemconfig("winner_container", state="normal")
+    
+    def set_position(self, x: float, y: float):
+        """Move container to absolute position"""
+        dx = x - self.x1
+        dy = y - self.y1
+        self.move(dx, dy)
+    
+    def set_position_center(self, canvas_width:float, canvas_height:float):
+        "Move container to center"
+        dx = (canvas_width - self.width) / 2
+        dy = (canvas_height - self.height) / 2
+        self.set_position(dx,dy)
+
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\frame6")
-font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\UI_TKFORGE\build\assets\fonts"))
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\frame6")
+font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\fonts"))
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -38,6 +256,8 @@ canvas = Canvas(
 )
 
 canvas.place(x = 0, y = 0)
+
+#bg image
 image_image_1 = PhotoImage(
     file=relative_to_assets("image_1.png"))
 image_1 = canvas.create_image(
@@ -45,6 +265,13 @@ image_1 = canvas.create_image(
     300.0,
     image=image_image_1
 )
+
+#image assets
+image_assets = {
+    'image_2': PhotoImage(file=relative_to_assets("image_2.png")),
+    'image_4': PhotoImage(file=relative_to_assets("image_4.png")),
+    'button_1': PhotoImage(file=relative_to_assets("button_1.png"))
+}
 
 #forfeit button
 button_image_1 = PhotoImage(
@@ -64,6 +291,7 @@ button_1.place(
     height=31.435800552368164
 )
 
+#user profile img
 image_image_2 = PhotoImage(
     file=relative_to_assets("image_2.png"))
 image_2 = canvas.create_image(
@@ -74,100 +302,12 @@ image_2 = canvas.create_image(
 
 #username placeholder
 canvas.create_text(
-    54.0,
-    48.0,
+    75.0,
+    35.0,
     anchor="nw",
     text="user",
     fill="#FFFFFF",
     font=("Montserrat Bold", 16 * -1)
-)
-
-image_image_3 = PhotoImage(
-    file=relative_to_assets("image_3.png"))
-image_3 = canvas.create_image(
-    498.0,
-    288.0,
-    image=image_image_3
-)
-
-canvas.create_text(
-    434.0,
-    350.0,
-    anchor="nw",
-    text="ENTER A LETTER:",
-    fill="#F8EFE0",
-    font=("Silkscreen Regular", 14 * -1)
-)
-
-#letter input value
-entry_1 = Entry(
-    bd=0,
-    bg="#FFFFFF",
-    fg="#000716",
-    justify="center",
-    highlightthickness=0
-)
-entry_1.place(
-    x=423.8644714355469,
-    y=374.405029296875,
-    width=150,
-    height=39.0
-)
-
-#guesses left value placeholder
-canvas.create_text(
-    186.0,
-    432.0,
-    anchor="nw",
-    text="GUESSES LEFT: 5",
-    fill="#FFFFFF",
-    font=("Silkscreen Regular", 20 * -1)
-)
-
-#line under letter guessed
-canvas.create_rectangle(
-    204.0,
-    316.54443359375,
-    266.8716011047363,
-    319.0592975616455,
-    fill="#FFAB24",
-    outline="")
-
-#letter guessed placeholder
-canvas.create_text(
-    209.0,
-    245.0,
-    anchor="nw",
-    text="X",
-    fill="#FFAB24",
-    font=("Silkscreen Regular", 64 * -1)
-)
-
-image_image_4 = PhotoImage(
-    file=relative_to_assets("image_4.png"))
-image_4 = canvas.create_image(
-    501.0,
-    221.0,
-    image=image_image_4
-)
-
-#time value placeholder
-canvas.create_text(
-    455.0,
-    163.0,
-    anchor="nw",
-    text="00:00",
-    fill="#FFFFFF",
-    font=("Silkscreen Regular", 24 * -1)
-)
-
-canvas.create_text(
-    397.0,
-    120.0,
-    anchor="nw",
-    text="TIME LEFT",
-    fill="#FFFFFF",
-    font=("Silkscreen Regular", 36 * -1)
 )
 
 #round label placeholder
@@ -179,5 +319,12 @@ canvas.create_text(
     fill="#FFFFFF",
     font=("Silkscreen Regular", 64 * -1)
 )
+
+game_container = GameContainer(canvas, image_assets)
+game_container.set_word_length(5)  # For a 5-letter word
+game_container.set_position_center(985, 589) # Absolute position
+game_container.update_words_guessed("A", True)
+
+
 window.resizable(False, False)
 window.mainloop()
