@@ -1,0 +1,88 @@
+module WhatsTheWord {
+
+    module referenceClasses {
+
+        struct ValuesList {
+            sequence<any> values;
+        };
+
+        struct Admin {
+            long adminId;
+            string username;
+            string password;
+            long waitingTime;
+            long gameTime;
+        };
+
+        struct Player {
+            long playerId;
+            string username;
+            string password;
+            long wins;
+            long noOfRoundWins;
+            long time;
+            boolean hasPlayed;
+        };
+
+        struct Leaderboard {
+            sequence<Player> players;
+        };
+
+        struct GameLobby {
+            long gameId;
+            sequence<Player> players;
+            long waitingTime;
+            long gameTime;
+            string word;
+            Player winner;
+        };
+    };
+
+    module game_logic {
+
+        interface Game {
+            void sendLetter(in char letter);
+            void sendTime(in referenceClasses::Player player);
+        };
+    };
+
+    module client {
+
+        interface ClientCallback {
+            void notify(in referenceClasses::ValuesList list);
+        };
+
+        module admin {
+
+            enum AdminRequestType {
+                ADMIN_LOGIN,
+                CREATE_NEW_PLAYER,
+                GET_PLAYER_DETAILS,
+                UPDATE_PLAYER_DETAILS,
+                DELETE_PLAYER,
+                SEARCH_PLAYER,
+                SET_LOBBY_WAITING_TIME,
+                SET_ROUND_TIME
+            };
+
+            interface AdminService{
+                void request(in AdminRequestType type, in referenceClasses::Admin admin, in ClientCallback adminCallback);
+            };
+        };
+
+        module player {
+
+            enum PlayerRequestType {
+                REGISTER,
+                LOGIN,
+                START_GAME,
+                GET_LEADERBOARD,
+                LOGOUT
+            };
+
+            interface PlayerService {
+                void request(in PlayerRequestType type, in referenceClasses::Player player, in ClientCallback playerCallback);
+            };
+        };
+    };
+};
