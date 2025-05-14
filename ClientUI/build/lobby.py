@@ -12,7 +12,7 @@ from tkinter import font
 from utils.FontLoader import FontLoader
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\frame3")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\lobby")
 font_loader = FontLoader(Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\fonts"))
 
 def relative_to_assets(path: str) -> Path:
@@ -106,6 +106,7 @@ canvas.create_text(
     tags=("countdown_value",)
 )
 
+#Waiting player text
 canvas.create_text(
     712.0,
     372.0,
@@ -130,7 +131,8 @@ canvas.create_text(
     anchor="center",
     text="username",
     fill="#232323",
-    font=("Montserrat Bold", 15 * -1)
+    font=("Montserrat Bold", 15 * -1),
+    tags=("username_placeholder",)
 )
 
 image_image_5 = PhotoImage(
@@ -149,10 +151,10 @@ image_6 = canvas.create_image(
     image=image_image_6
 )
 
-def update_word(countdown:int):
+def update_countdown(countdown:int):
     """Update countdown value"""
     canvas.itemconfig('countdown_value', text=countdown)
 
-update_word(19)
+update_countdown(10)
 window.resizable(False, False)
 window.mainloop()

@@ -29,7 +29,7 @@ class FontLoader:
         except Exception as e:
             warnings.warn(f"Failed to load Tk font '{family}': {e}. Using fallback.")
             return tkfont.Font(family="Arial", size=size, weight=weight)
-
+        
     def load_pil_font(
         self,
         name: str,

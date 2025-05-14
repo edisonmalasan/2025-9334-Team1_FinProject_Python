@@ -4,7 +4,7 @@ from tkinter.ttk import Treeview, Style
 import tkinter.font as tkfont
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\frame8")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\leaderboard")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -53,8 +53,10 @@ table = Treeview(
     columns=("rank", "username", "points"),
     show="headings",
     height=10,
-    style="Custom.Treeview"  # Use our custom style
+    style="Custom.Treeview"
 )
+
+table.tag_bind('leaderboard_table')
 
 #columns
 table.column("rank", width=100, anchor="center")
