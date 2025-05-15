@@ -1,4 +1,3 @@
-import omniORB
 from omniORB import CORBA
 from omniORB import CosNaming
 import sys

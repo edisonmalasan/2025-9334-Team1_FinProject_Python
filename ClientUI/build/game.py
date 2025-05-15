@@ -7,13 +7,31 @@ from pathlib import Path
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import StringVar, Tk, Canvas, Entry, Text, Button, PhotoImage
-from tkinter import font
+from tkinter import *
 from utils.FontLoader import FontLoader
+from utils import ListUtility
+from utils import OrbConnector as oc
+import sys
+from IDL import WhatsTheWord
+from IDL import WhatsTheWord__POA
+import threading
+import time
 
-from tkinter import Canvas
+import omniORB
 
-class GameContainer:
+# create orb connection
+con = oc.ORBConnector(sys.argv)
+
+player = WhatsTheWord.referenceClasses.Player(0, "GUI_Player", "password", 0, 0, -1, False)
+
+class ClientCallbackImpl(WhatsTheWord__POA.client.ClientCallback):
+    def __init__(self, game_controller):
+        self.game_controller = game_controller
+        
+    def notify(self, values_list: WhatsTheWord.referenceClasses.ValuesList):
+        window.after(0, lambda: self.game_controller.update(values_list))
+
+class GameContainer(Frame):
     def __init__(self, canvas: Canvas, assets):
         self.canvas = canvas
         self.elements = {}
@@ -131,7 +149,11 @@ class GameContainer:
     def update_username(self, new_name: str):
         """Update username text"""
         self.canvas.itemconfig(self.elements['username'], text=new_name)
-    
+
+    def update_timer(self, countdown: str):
+        """Update timer text"""
+        self.canvas.itemconfig(self.elements['time_value'], text=countdown)
+
     def update_points(self, points: int):
         """Update points display"""
         self.canvas.itemconfig(self.elements['points'], text=f"{points} points")
@@ -261,6 +283,137 @@ class GameContainer:
         dy = (canvas_height - self.height) / 2
         self.set_position(dx,dy)
 
+class GameController:
+    def __init__(self, game_container):
+        self.player = None
+        self.game_container = game_container
+        self.game_over = False
+        self.point = 0
+        self.timer_value = 0
+        self.current_time = 0
+        self.mystery_word = ""
+        self.guessed_letters = set()
+        self.lives = 5
+        self.timer_thread = None
+        self.stop_timer = False
+        self.callback_impl = ClientCallbackImpl(self)
+        self.callback_ref = None
+        
+        #callback for letter guesses
+        self.game_container.set_on_letter_guessed(self.handle_letter_guess)
+
+    def play_game(self, value_list):
+        self.timer_value = get_int_from_list(value_list)
+        self.mystery_word = get_string_from_list(value_list).upper()
+        
+        self.guessed_letters = set()
+        self.lives = 5
+        self.game_over = False
+        self.stop_timer = False
+        
+        #update gui
+        self.game_container.set_word_length(len(self.mystery_word))
+        self.game_container.canvas.itemconfig(
+            self.game_container.elements['guesses_left'],
+            text=f"GUESSES LEFT: {self.lives}"
+        )
+        self.update_timer_display(self.timer_value)
+        
+        self.start_timer()
+
+    def start_timer(self):
+        if self.timer_thread and self.timer_thread.is_alive():
+            self.stop_timer = True
+            self.timer_thread.join()
+            
+        self.stop_timer = False
+        self.timer_thread = threading.Thread(target=self.run_timer)
+        self.timer_thread.start()
+
+    def run_timer(self):
+        current_time = self.timer_value
+        while current_time >= 0 and not self.game_over and not self.stop_timer:
+            self.current_time = current_time
+            self.update_timer_display(current_time)
+            time.sleep(1)
+            current_time -= 1
+            
+        if not self.game_over and not self.stop_timer:
+            self.game_over = True
+            self.show_tooltip("Time's up!")
+            
+
+    def update_timer_display(self, seconds):
+        mins, secs = divmod(seconds, 60)
+        time_str = f"{mins:02d}:{secs:02d}"
+        self.game_container.update_timer(time_str)
+
+    def handle_letter_guess(self, letter):
+        """Callback function for when a letter is guessed"""
+        letter = letter.upper()
+        
+        if letter in self.guessed_letters:
+            self.show_tooltip(f"'{letter}' was already guessed")
+            return None  # No update needed
+        
+        self.guessed_letters.add(letter)
+        
+        # Check if letter is in word
+        positions = [i for i, l in enumerate(self.mystery_word) if l == letter]
+        is_correct = bool(positions)
+        
+        if not is_correct:
+            self.lives -= 1
+            self.game_container.canvas.itemconfig(
+                self.game_container.elements['guesses_left'],
+                text=f"GUESSES LEFT: {self.lives}"
+            )
+            self.show_tooltip(f"'{letter}' is not in the word")
+            
+            if self.lives <= 0:
+                self.game_over = True
+                self.show_tooltip("Game Over! No more guesses left.")
+        
+        if self._is_word_fully_guessed():
+            self.point += 1
+            game_container.update_points(self.point)
+            self.show_tooltip(f"You won! The word was {self.mystery_word}")
+            
+        return is_correct, positions
+
+    def _is_word_fully_guessed(self):
+        """Check if all letters in the word have been guessed"""
+        return all(letter in self.guessed_letters for letter in self.mystery_word)
+
+    def show_tooltip(self, message):
+        """Show a temporary message to the player"""
+        cx = self.game_container.x1 + self.game_container.width / 2
+        tooltip = self.game_container.canvas.create_text(
+            cx,
+            self.game_container.y1 + 300,
+            text=message,
+            fill="#FF0000",
+            font=("Silkscreen Regular", 14 * -1),
+            anchor="n"
+        )
+        self.game_container.canvas.after(2000, lambda: self.game_container.canvas.delete(tooltip))
+
+    def update(self, value_list):
+        winner = get_winner_from_list(value_list)
+
+        if winner != "" or winner == "*NOT_ENOUGH_PLAYERS*":
+            result_controller = ResultsController()
+            result_controller.displayWinner(winner)
+        else:
+            self.play_game(value_list)
+
+    def initialize_corba(self):
+        self.callback_ref = self.callback_impl._this()
+        con.getPlayerService().request(WhatsTheWord.client.player.START_GAME, player, self.callback_ref)
+    
+    def handle_forfeit(self, input: bool):
+        self.game_over = input
+
 #path declarations
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\paulp\VSCODE_REPO\2025-9334-team1_finproject_python\ClientUI\build\assets\game")
@@ -314,7 +467,7 @@ button_1 = Button(
     image=button_image_1,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_1 clicked"),
+    command=lambda: game_controller.handle_forfeit(False),
     relief="flat",
     bg="#232323"
 )
@@ -354,57 +507,34 @@ canvas.create_text(
     font=("Silkscreen Regular", 64 * -1)
 )
 
-secret_word = "SNAKES"
-remaining_guesses = 5
-guessed_letters = set()
 
-def handle_letter_guess(letter):
-    """Callback function for when a letter is guessed"""
-    global remaining_guesses, guessed_letters, secret_word
-    
-    letter = letter.upper()
-    
-    #check if letter is guessed (nabubuang na ko)
-    if letter in guessed_letters:
-        show_tooltip(f"'{letter}' was already guessed")
-        return None  #no update needed
-    
-    guessed_letters.add(letter)
-    
-    #to check if letter is in word
-    positions = [i for i, l in enumerate(secret_word) if l == letter]
-    is_correct = bool(positions)
-    
-    if not is_correct:
-        remaining_guesses -= 1
-        game_container.canvas.itemconfig(
-            game_container.elements['guesses_left'],
-            text=f"GUESSES LEFT: {remaining_guesses}"
-        )
-        show_tooltip(f"'{letter}' is not in the word")
-    
-    return is_correct, positions
+def get_string_from_list(values_list):
+    extracted_value = omniORB.any.from_any(values_list.values[0])
+    if isinstance(extracted_value, str):
+        str_from_any = extracted_value
+    return str_from_any
 
-def show_tooltip(message):
-    """Show a temporary message to the player"""
-    cx = game_container.x1 + game_container.width / 2
-    tooltip = game_container.canvas.create_text(
-        cx,
-        game_container.y1 + 300,
-        text=message,
-        fill="#FF0000",
-        font=("Silkscreen Regular", 14 * -1),
-        anchor="n"
-    )
-    #remove tooltip after 2s
-    game_container.canvas.after(2000, lambda: game_container.canvas.delete(tooltip))
+def get_int_from_list(values_list):
+    extracted_value = omniORB.any.from_any(values_list.values[1])
+    if isinstance(extracted_value, int):
+        int_from_any = extracted_value
+    return int_from_any
+
+def get_winner_from_list(values_list):
+    extracted_value = omniORB.any.from_any(values_list.values[2])
+    if isinstance(extracted_value, str):
+        winner = extracted_value
+    return winner
 
 
 game_container = GameContainer(canvas, image_assets)
-game_container.set_word_length(5)
 game_container.set_position_center(985, 589)
-game_container.set_on_letter_guessed(handle_letter_guess)
-game_container.set_word_length(len(secret_word))
+
+game_controller = GameController(game_container)
+game_controller.initialize_corba()
+
+test_values = omniORB.Any([omniORB.Any("PYTHON"), omniORB.Any(60)])  # Word: PYTHON, 60 seconds
+game_controller.play_game(test_values)
 
 window.resizable(False, False)
 window.mainloop()
