@@ -63,6 +63,8 @@ class LoginRegisterController:
         else:
             get_player_from_list(value_list)
             main_menu = MainMenu()
+            callback_impl.removeAllObservers()
+            callback_impl.add_observer(main_menu)
             main_menu.display_menu()
 
     def display_menu(self):
@@ -92,7 +94,7 @@ class LoginRegisterController:
             elif choice == '3':
                 # Exit the program
                 print("Exiting... Goodbye!")
-                break
+                sys.exit()
 
             else:
                 print("Invalid choice. Please enter 1, 2, or 3.")
@@ -109,12 +111,6 @@ def get_player_from_list(values_list):
 
 class MainMenu:
     def __init__(self):
-        # Sample data for leaderboard
-        self.leaderboard = [
-            {"username": "alice", "score": 500},
-            {"username": "bob", "score": 450},
-            {"username": "charlie", "score": 400}
-        ]
         self.checker = True
 
     def start_game(self):
@@ -130,17 +126,14 @@ class MainMenu:
     def view_leaderboards(self):
         """Display the leaderboard."""
         print("\n--- Leaderboards ---")
-        if not self.leaderboard:
-            print("No scores available.")
-        else:
-            for rank, entry in enumerate(self.leaderboard, start=1):
-                print(f"{rank}. {entry['username']} - Score: {entry['score']}")
-        print()
+        connection.getPlayerService().request(WhatsTheWord.client.player.GET_LEADERBOARD, player, ref)
 
-    def exit_program(self):
+    def logout(self):
         """Exit the program."""
-        print("\nExiting... Goodbye!\n")
-        exit()
+        login_controller = LoginRegisterController()
+        callback_impl.add_observer(login_controller)
+        connection.getPlayerService().request(WhatsTheWord.client.player.LOGOUT, player, ref)
+        login_controller.display_menu()
 
     def display_menu(self):
         """Displays the main menu and handles user input."""
@@ -148,7 +141,7 @@ class MainMenu:
             print("\n--- Main Menu ---")
             print("1. Start Game")
             print("2. Leaderboards")
-            print("3. Exit")
+            print("3. Logout")
             choice = input("Please select an option (1, 2, or 3): ")
 
             if choice == '1':
@@ -156,9 +149,32 @@ class MainMenu:
             elif choice == '2':
                 self.view_leaderboards()
             elif choice == '3':
-                self.exit_program()
+                self.logout()
             else:
                 print("Invalid choice. Please enter 1, 2, or 3.")
+
+    def update(self, value_list):
+        self.leaderboards = decode_players(value_list.values)
+
+def extract_inner_any_array(outer_any_array):
+    any_array_content = omniORB.any.from_any(outer_any_array)
+    player_details = [any_array_content[0], any_array_content[1]]
+
+    return player_details
+
+def decode_players(any_array):
+    player_list = []
+
+    for any_object in any_array:
+        player_data = extract_inner_any_array(any_object)
+        username = player_data[0]
+        wins = player_data[1]
+
+        player = Player(0, username, "", wins, 0, 0, True)
+        player_list.append(player)
+        print(f"{username}: {wins}")
+
+    return player_list
 
 class MatchMakingController:
     def __init__(self):
@@ -185,12 +201,8 @@ class GameController:
         self.player = None
 
     def play_game(self, value_list):
-        try:
-            timer_value = get_int_from_list(value_list)
-            mystery_word = get_string_from_list(value_list)
-        except CORBA.BAD_TYPE:
-            print("Error: Invalid data types in ValuesList.")
-            return
+        timer_value = get_int_from_list(value_list)
+        mystery_word = get_string_from_list(value_list)
 
         guessed_letters = set()
         lives = [5]
@@ -209,7 +221,7 @@ class GameController:
                 time.sleep(1)
                 current_time -= 1
             if not self.game_over:
-                print("Time's up!")
+                print("\nTime's up!")
                 self.game_over = True
 
         def input_thread():
@@ -265,7 +277,7 @@ class GameController:
     def update(self, value_list):
         winner = get_winner_from_list(value_list)
 
-        if winner != "":
+        if winner != "" or winner == "*NOT_ENOUGH_PLAYERS*":
             result_controller = ResultsController()
             result_controller.displayWinner(winner)
 
@@ -276,7 +288,11 @@ class ResultsController:
         pass
 
     def displayWinner(self, winner):
-        print(f"The winner is {winner}")
+        if winner == "*NOT_ENOUGH_PLAYERS*":
+            print(f"Not enough players. Game not started")
+        else:
+            print(f"The winner is {winner}")
+
         mainMenuController = MainMenu()
         callback_impl.removeAllObservers()
         callback_impl.add_observer(mainMenuController)
