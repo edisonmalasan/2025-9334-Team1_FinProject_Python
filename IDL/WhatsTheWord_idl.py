@@ -254,14 +254,15 @@ _0_WhatsTheWord__POA.client.admin = omniORB.openModule("WhatsTheWord__POA.client
 
 # enum AdminRequestType
 _0_WhatsTheWord.client.admin.ADMIN_LOGIN = omniORB.EnumItem("ADMIN_LOGIN", 0)
-_0_WhatsTheWord.client.admin.CREATE_NEW_PLAYER = omniORB.EnumItem("CREATE_NEW_PLAYER", 1)
-_0_WhatsTheWord.client.admin.GET_PLAYER_DETAILS = omniORB.EnumItem("GET_PLAYER_DETAILS", 2)
-_0_WhatsTheWord.client.admin.UPDATE_PLAYER_DETAILS = omniORB.EnumItem("UPDATE_PLAYER_DETAILS", 3)
-_0_WhatsTheWord.client.admin.DELETE_PLAYER = omniORB.EnumItem("DELETE_PLAYER", 4)
-_0_WhatsTheWord.client.admin.SEARCH_PLAYER = omniORB.EnumItem("SEARCH_PLAYER", 5)
-_0_WhatsTheWord.client.admin.SET_LOBBY_WAITING_TIME = omniORB.EnumItem("SET_LOBBY_WAITING_TIME", 6)
-_0_WhatsTheWord.client.admin.SET_ROUND_TIME = omniORB.EnumItem("SET_ROUND_TIME", 7)
-_0_WhatsTheWord.client.admin.AdminRequestType = omniORB.Enum("IDL:WhatsTheWord/client/admin/AdminRequestType:1.0", (_0_WhatsTheWord.client.admin.ADMIN_LOGIN, _0_WhatsTheWord.client.admin.CREATE_NEW_PLAYER, _0_WhatsTheWord.client.admin.GET_PLAYER_DETAILS, _0_WhatsTheWord.client.admin.UPDATE_PLAYER_DETAILS, _0_WhatsTheWord.client.admin.DELETE_PLAYER, _0_WhatsTheWord.client.admin.SEARCH_PLAYER, _0_WhatsTheWord.client.admin.SET_LOBBY_WAITING_TIME, _0_WhatsTheWord.client.admin.SET_ROUND_TIME,))
+_0_WhatsTheWord.client.admin.ADMIN_LOGOUT = omniORB.EnumItem("ADMIN_LOGOUT", 1)
+_0_WhatsTheWord.client.admin.CREATE_NEW_PLAYER = omniORB.EnumItem("CREATE_NEW_PLAYER", 2)
+_0_WhatsTheWord.client.admin.GET_PLAYER_DETAILS = omniORB.EnumItem("GET_PLAYER_DETAILS", 3)
+_0_WhatsTheWord.client.admin.UPDATE_PLAYER_DETAILS = omniORB.EnumItem("UPDATE_PLAYER_DETAILS", 4)
+_0_WhatsTheWord.client.admin.DELETE_PLAYER = omniORB.EnumItem("DELETE_PLAYER", 5)
+_0_WhatsTheWord.client.admin.SEARCH_PLAYER = omniORB.EnumItem("SEARCH_PLAYER", 6)
+_0_WhatsTheWord.client.admin.SET_LOBBY_WAITING_TIME = omniORB.EnumItem("SET_LOBBY_WAITING_TIME", 7)
+_0_WhatsTheWord.client.admin.SET_ROUND_TIME = omniORB.EnumItem("SET_ROUND_TIME", 8)
+_0_WhatsTheWord.client.admin.AdminRequestType = omniORB.Enum("IDL:WhatsTheWord/client/admin/AdminRequestType:1.0", (_0_WhatsTheWord.client.admin.ADMIN_LOGIN, _0_WhatsTheWord.client.admin.ADMIN_LOGOUT, _0_WhatsTheWord.client.admin.CREATE_NEW_PLAYER, _0_WhatsTheWord.client.admin.GET_PLAYER_DETAILS, _0_WhatsTheWord.client.admin.UPDATE_PLAYER_DETAILS, _0_WhatsTheWord.client.admin.DELETE_PLAYER, _0_WhatsTheWord.client.admin.SEARCH_PLAYER, _0_WhatsTheWord.client.admin.SET_LOBBY_WAITING_TIME, _0_WhatsTheWord.client.admin.SET_ROUND_TIME,))
 
 _0_WhatsTheWord.client.admin._d_AdminRequestType  = (omniORB.tcInternal.tv_enum, _0_WhatsTheWord.client.admin.AdminRequestType._NP_RepositoryId, "AdminRequestType", _0_WhatsTheWord.client.admin.AdminRequestType._items)
 _0_WhatsTheWord.client.admin._tc_AdminRequestType = omniORB.tcInternal.createTypeCode(_0_WhatsTheWord.client.admin._d_AdminRequestType)
